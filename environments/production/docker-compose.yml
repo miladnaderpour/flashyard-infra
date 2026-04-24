@@ -17,7 +17,7 @@ services:
 
 
   backend:
-    image: ghcr.io/miladnaderpour/flashyard-backend:dev-latest
+    image: ${BACKEND_IMAGE}
     restart: unless-stopped
     depends_on:
       - db
@@ -28,7 +28,7 @@ services:
 
 
   frontend:
-    image: ghcr.io/miladnaderpour/flashyard-frontend:dev-latest
+    image: ${FRONTEND_IMAGE}
     restart: unless-stopped
     depends_on:
       - backend
@@ -37,4 +37,3 @@ services:
     command: ["nginx", "-g", "daemon off;"]
     ports:
       - "80:80"
-      - "443:443"
