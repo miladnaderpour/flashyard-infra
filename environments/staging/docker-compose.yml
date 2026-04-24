@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://json.schemastore.org/compose.json
+# /environments/staging/docker-compose.yml
+
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: flashyard_staging
+      POSTGRES_USER: flashyard_user
+      POSTGRES_PASSWORD: change_me_later
+    volumes:
+      - /data/flashyard/postgres/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+  backend:
+    image: ghcr.io/miladnaderpour/flashyard-backend:dev-latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+       - /data/flashyard/staging/.env
+    ports:
+      - "8000:8000"
+
+
+  frontend:
+    image: ghcr.io/miladnaderpour/flashyard-frontend:dev-latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - /data/flashyard/staging/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "80:80"
+      - "443:443"
