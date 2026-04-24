@@ -205,12 +205,9 @@ if [[ "${STEP_ENABLED[2]}" == "1" ]]; then
     sudo mkdir -p "$DOCKER_ROOT"
     sudo mkdir -p /etc/docker
 
-    sudo tee /etc/docker/daemon.json >/dev/null <<EOF
-{
-"data-root": "${DOCKER_ROOT}"
-}
-EOF
-    
+    printf '{\n  "data-root": "%s"\n}\n' "${DOCKER_ROOT}" \
+        | sudo tee /etc/docker/daemon.json >/dev/null
+
     sudo systemctl enable docker
     sudo systemctl restart docker
     
@@ -264,20 +261,14 @@ if [[ "${STEP_ENABLED[4]}" == "1" ]]; then
     echo
     echo "==> Step 5: Configure logrotate"
 
-    sudo tee /etc/logrotate.d/flashyard >/dev/null <<EOF
-${BASE_DIR}/logs/*.log
-${BASE_DIR}/logs/nginx/*.log
-${BASE_DIR}/logs/backend/*.log
-${BASE_DIR}/logs/postgres/*.log {
-daily
-rotate 14
-compress
-delaycompress
-missingok
-notifempty
-copytruncate
-}
-EOF
+    {
+        printf '%s\n' \
+            "${BASE_DIR}/logs/*.log" \
+            "${BASE_DIR}/logs/nginx/*.log" \
+            "${BASE_DIR}/logs/backend/*.log" \
+            "${BASE_DIR}/logs/postgres/*.log"
+        printf '{\n    daily\n    rotate 14\n    compress\n    delaycompress\n    missingok\n    notifempty\n    copytruncate\n}\n'
+    } | sudo tee /etc/logrotate.d/flashyard >/dev/null
 else
     echo
     echo "==> Step 5: Logrotate skipped"
