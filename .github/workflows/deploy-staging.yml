@@ -13,21 +13,13 @@ jobs:
       - name: Checkout infra repo
         uses: actions/checkout@v4
 
-      - name: Write image variables to server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -e
-
-            # Write images passed from app repo
-            cat > /data/flashyard/staging/.env.images <<EOF
-            BACKEND_IMAGE=${{ github.event.client_payload.backend_image }}
-            FRONTEND_IMAGE=${{ github.event.client_payload.frontend_image }}
-            EOF
+      - name: Prepare image variables
+        run: |
+          mkdir -p environments/staging
+          cat > environments/staging/.env.images <<EOF
+          BACKEND_IMAGE=${{ github.event.client_payload.backend_image }}
+          FRONTEND_IMAGE=${{ github.event.client_payload.frontend_image }}
+          EOF
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -38,8 +30,17 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
+            cd /data/flashyard/staging
 
-            export GHCR_USERNAME='${{ secrets.GHCR_USERNAME }}'
-            export GHCR_TOKEN='${{ secrets.GHCR_TOKEN }}'
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-            bash /data/flashyard/staging/scripts/deploy-staging.sh
+            docker compose pull
+            docker compose up -d db
+
+            until docker compose exec -T db pg_isready -U flashyard_user -d flashyard_staging; do
+              echo "Waiting for database..."
+              sleep 2
+            done
+
+            docker compose run --rm backend alembic upgrade head
+            docker compose up -d
