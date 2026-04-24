@@ -1,13 +1,13 @@
-name: Deploy Staging
+name: Deploy Production
 
 on:
   repository_dispatch:
-    types: [deploy-staging]
+    types: [deploy-production]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: staging
+    environment: production
 
     steps:
       - name: Checkout infra repo
@@ -23,7 +23,7 @@ jobs:
           script: |
             set -e
 
-            cat > /data/flashyard/staging/.env.images <<EOF
+            cat > /data/flashyard/production/.env.images <<EOF
             BACKEND_IMAGE=${{ github.event.client_payload.backend_image }}
             FRONTEND_IMAGE=${{ github.event.client_payload.frontend_image }}
             EOF
@@ -31,4 +31,4 @@ jobs:
             export GHCR_USERNAME='${{ secrets.GHCR_USERNAME }}'
             export GHCR_TOKEN='${{ secrets.GHCR_TOKEN }}'
 
-            bash /data/flashyard/staging/scripts/deploy-staging.sh
+            bash /data/flashyard/production/scripts/deploy-production.sh
