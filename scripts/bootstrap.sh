@@ -207,9 +207,18 @@ if [[ "${STEP_ENABLED[2]}" == "1" ]]; then
 
     sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-  "data-root": "${DOCKER_ROOT}"
+"data-root": "${DOCKER_ROOT}"
 }
 EOF
+    
+    sudo systemctl enable docker
+    sudo systemctl restart docker
+    
+    sudo usermod -aG docker "$APP_USER"
+    
+else
+    echo "==> Docker setup skipped"
+fi
 
     sudo systemctl enable docker
     sudo systemctl restart docker
@@ -260,13 +269,13 @@ ${BASE_DIR}/logs/*.log
 ${BASE_DIR}/logs/nginx/*.log
 ${BASE_DIR}/logs/backend/*.log
 ${BASE_DIR}/logs/postgres/*.log {
-    daily
-    rotate 14
-    compress
-    delaycompress
-    missingok
-    notifempty
-    copytruncate
+daily
+rotate 14
+compress
+delaycompress
+missingok
+notifempty
+copytruncate
 }
 EOF
 else
