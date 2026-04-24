@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="/data/flashyard/staging"
+APP_DIR="/data/flashyard/production"
 LOG_DIR="/data/flashyard/logs"
-LOG_FILE="${LOG_DIR}/deploy-staging.log"
+LOG_FILE="${LOG_DIR}/deploy-production.log"
 
 IMAGES_ENV="${APP_DIR}/.env.images"
 ROLLBACK_ENV="${APP_DIR}/.env.rollback"
@@ -84,7 +84,7 @@ trap rollback ERR
 
 {
     log "========================================"
-    log "Staging deployment started"
+    log "Production deployment started"
     log "Host: $(hostname)"
     
     cd "$APP_DIR"
@@ -106,7 +106,7 @@ trap rollback ERR
     "${COMPOSE_CMD[@]}" up -d db
     
     log "Waiting for database"
-    until "${COMPOSE_CMD[@]}" exec -T db pg_isready -U flashyard_user -d flashyard_staging; do
+    until "${COMPOSE_CMD[@]}" exec -T db pg_isready -U flashyard_user -d flashyard_production; do
         log "Database not ready yet..."
         sleep 2
     done
@@ -139,7 +139,7 @@ trap rollback ERR
     log "Final container status"
     "${COMPOSE_CMD[@]}" ps
     
-    log "Staging deployment finished successfully"
+    log "Production deployment finished successfully"
     log "========================================"
     
 } >> "$LOG_FILE" 2>&1

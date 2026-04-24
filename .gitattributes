@@ -1,1 +1,1 @@
-environments/staging/scripts/*.sh text eol=lf
+environments/*/scripts/*.sh text eol=lf
